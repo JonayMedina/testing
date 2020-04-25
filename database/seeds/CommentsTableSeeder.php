@@ -12,8 +12,6 @@ class CommentsTableSeeder extends Seeder
     public function run()
     {
         
-        factory(App\Comment::class, 20)->create()->each(function ($u) {
-        	$u->post()->save();
-    	});
+        factory(App\Comment::class, 20)->create();
     }
 }

@@ -13,12 +13,19 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-
-// Route::get('/{any}', 'HomeController@admin')->where('any', '.*');
 Route::get('/', function () {
     return view('welcome');
 });
 
 Auth::routes();
+
+Route::get('comments/list','CommentController@allItems')->name('comments.list');
+Route::post('comments/store/{id}', 'CommentController@store')->name('comments-store');
+Route::resource('comments', 'CommentController');
+
+
+Route::resource('posts', 'PostController');
+
+Route::resource('users', 'UserController');
 
 Route::get('/home', 'HomeController@index')->name('home');

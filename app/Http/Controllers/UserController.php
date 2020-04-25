@@ -2,18 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Post;
+use App\User;
 use App\Http\Traits\AppTrait;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Auth\RegisterController;
 
-class PostController extends Controller
+class UserController extends Controller
 {
     use AppTrait;
 
     public function __construct()
     {
-            $this->middleware('auth', ['except' => ['index', 'show']]);
+            $this->middleware('auth', ['except' => ['show']]);
+            $this->middleware('admin',['except' => ['show', 'edit','update']]);
     }
     /**
      * Display a listing of the resource.
@@ -22,9 +24,9 @@ class PostController extends Controller
      */
     public function index()
     {
-        $posts = Post::paginate(10);
+        $users = User::paginate(10);
         // dd($posts[0]->user);
-        return view('posts.index', compact('posts'));
+        return view('users.index', compact('users'));
     }
 
     /**
@@ -34,7 +36,7 @@ class PostController extends Controller
      */
     public function create()
     {
-        return view('posts.create');
+        return view('users.create');
     }
 
     /**
@@ -46,27 +48,15 @@ class PostController extends Controller
     public function store(Request $request)
     {   
 
-        $data = request()->validate([
-            'name' => 'required|alpha_num',
-            'description' => 'required|alpha_num'
-        ]);
+        $data = $this->validator($request);
 
-        $slug = $this->createSlug($request->name,'posts','slug');
-        $post = Post::create ([
-            'user_id'=> \Auth::user()->id,
-            'slug' =>  $slug,
+        $user = User::create ([
+            'email'=>$request->email,
             'name'=>$request->name,
-            'description'=>$request->description,
-            'active' => 1
         ]);
 
-        if ($request->hasFile('img')) {
-            
-            $url = $request->image->store('public');
-            Post::where('id',$post->id)->update(['url' => $url]);
-        }
 
-        return redirect()->action('PostController@show', [$post->id]);
+        return redirect()->action('UserController@show', [$user->id]);
     }
 
     /**
@@ -77,7 +67,7 @@ class PostController extends Controller
      */
     public function show($id)
     {
-        return view('posts.show', ['post' => Post::findOrFail($id)]);
+        return view('users.show', ['user' => User::findOrFail($id)]);
     }
 
     /**
@@ -88,7 +78,7 @@ class PostController extends Controller
      */
     public function edit($id)
     {
-        return view('posts.edit', ['post' => Post::findOrFail($id)]);
+        return view('users.edit', ['user' => User::findOrFail($id)]);
     }
 
     /**
@@ -100,21 +90,11 @@ class PostController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $slug = $this->createSlug($request->name,'posts','slug');
-        $post = Post::where('id',$id)->update ([
-            'slug' =>  $slug,
+        $user = User::where('id',$id)->update ([
+            'email'=>$request->email,
             'name'=>$request->name,
-            'description'=>$request->description,
-            'active' => 1
         ]);
-
-        if ($request->hasFile('img')) {
-            $url = Post::findOrFail($id);
-            Storage::disk('public')->delete($post->url);
-            $url = $request->image->store('public');
-            Post::where('id',$post->id)->update(['url' => $url]);
-        }
-        return view('posts.show', ['post' => Post::findOrFail($id)]);
+        return redirect()->action('UserController@show', [$user->id]);
     }
 
     /**
@@ -125,9 +105,9 @@ class PostController extends Controller
      */
     public function destroy($id)
     {
-        $post = Pos::find($id);
+        $user = User::find($id);
         
-        $post->delete();
+        $user->delete();
  
         return redirect()->back()->withErrors([ 'POst Deleted']);
     }
